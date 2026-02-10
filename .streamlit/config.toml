@@ -6,10 +6,9 @@ textColor = "#e8e8e8"
 font = "monospace"
 
 [server]
-port = 8510
 headless = true
 enableCORS = false
-enableXsrfProtection = true
+enableXsrfProtection = false
 
 [browser]
 gatherUsageStats = false
