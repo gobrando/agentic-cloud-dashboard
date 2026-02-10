@@ -554,7 +554,22 @@ def get_bigquery_client():
         "https://www.googleapis.com/auth/cloud-platform"
     ]
     
-    # Method 1: Try st.secrets (for Streamlit Cloud deployment)
+    # Method 1: Try GCP_SERVICE_ACCOUNT_JSON env var (for Render / cloud platforms)
+    gcp_json = os.environ.get("GCP_SERVICE_ACCOUNT_JSON")
+    if gcp_json:
+        try:
+            creds_dict = json.loads(gcp_json)
+            credentials = service_account.Credentials.from_service_account_info(
+                creds_dict, scopes=scopes
+            )
+            return bigquery.Client(
+                credentials=credentials,
+                project=creds_dict.get("project_id", "nava-labs")
+            )
+        except Exception:
+            pass
+    
+    # Method 2: Try st.secrets (for Streamlit Cloud deployment)
     try:
         creds_dict = dict(st.secrets["gcp_service_account"])
         credentials = service_account.Credentials.from_service_account_info(
@@ -567,7 +582,7 @@ def get_bigquery_client():
     except (KeyError, FileNotFoundError):
         pass
     
-    # Method 2: Try local service account file
+    # Method 3: Try local service account file
     key_path = os.path.join(os.path.dirname(__file__), 'service-account.json')
     if os.path.exists(key_path):
         credentials = service_account.Credentials.from_service_account_file(
@@ -575,7 +590,7 @@ def get_bigquery_client():
         )
         return bigquery.Client(credentials=credentials, project="nava-labs")
     
-    # Method 3: Fall back to default credentials (gcloud auth)
+    # Method 4: Fall back to default credentials (gcloud auth)
     return bigquery.Client(project="nava-labs")
 
 def get_cache_path():
